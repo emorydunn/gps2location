@@ -8,22 +8,22 @@
 import Foundation
 import CoreLocation
 
-public enum EXIFToolError: Error {
-    case writeError(message: String, command: String)
-    case noImages(URL)
-    
-    public var localizedDescription: String {
-        switch self {
-        case .writeError(let message, let command):
-            return """
-            \(message)
-            \(command)
-            """
-        case .noImages(let url):
-            return "No images were found at \(url.path)"
-        }
-    }
-}
+//public enum EXIFToolError: Error {
+//    case writeError(message: String, command: String)
+//    case noImages(URL)
+//
+//    public var localizedDescription: String {
+//        switch self {
+//        case .writeError(let message, let command):
+//            return """
+//            \(message)
+//            \(command)
+//            """
+//        case .noImages(let url):
+//            return "No images were found at \(url.path)"
+//        }
+//    }
+//}
 
 public struct EXIFLocation: Codable {
     public let sourceURL: URL
@@ -67,56 +67,23 @@ public struct EXIFLocation: Codable {
 //        print("_returning from reverseGeocodeLocation")
     }
     
-    func writeLocationInfo(from placemark: CLPlacemark) throws {
-        #if os(Linux)
-            let process = Task()
-        #else
-            let process = Process()
-        #endif
-        let stdOutPipe = Pipe()
-        
-        process.standardOutput = stdOutPipe
-        
-        process.launchPath = "/usr/local/bin/exiftool"
-        process.arguments = [
+    func writeLocationInfo(from placemark: CLPlacemark, exiftool: ExiftoolProtocol = Exiftool()) throws {
+        var arguments = [
             sourceURL.path,
             "-m"
         ]
-        
         if let value = placemark.country {
-//            print("country \(value)")
-            process.arguments?.append("-IPTC:Country-PrimaryLocationName=\(value)")
+            arguments.append("-IPTC:Country-PrimaryLocationName=\(value)")
         }
         if let value = placemark.administrativeArea {
-//            print("state \(value)")
-            process.arguments?.append("-IPTC:Province-State=\(value)")
+            arguments.append("-IPTC:Province-State=\(value)")
         }
         if let value = placemark.locality {
-//            print("city \(value)")
-            process.arguments?.append("-IPTC:City=\(value)")
+            arguments.append("-IPTC:City=\(value)")
         }
         
-//        print(
-//            """
-//            running shell command:
-//            \(process.launchPath!)
-//            \(process.arguments!.joined(separator: " "))
-//            """
-//        )
-        
-        process.launch()
-        // Process Pipe into a String
-        let stdOutputData = stdOutPipe.fileHandleForReading.readDataToEndOfFile()
-        let stdOutString = String(bytes: stdOutputData, encoding: String.Encoding.utf8)
+        _ = try exiftool.execute(arguments: arguments)
 
-        process.waitUntilExit()
-        
-        if process.terminationStatus != 0 {
-            throw EXIFToolError.writeError(message: stdOutString ?? "", command: process.arguments!.joined(separator: " "))
-//            return .success(stdout: stdOutString ?? "")
-        }
-        
-//        return .failure(errout: stdOutString ?? "")
 
     }
     
@@ -151,42 +118,49 @@ public struct EXIFLocation: Codable {
 
 extension EXIFLocation {
     
-    public static func exifLocation(for url: URL) throws -> [EXIFLocation] {
-        let process = Process()
-        let stdOutPipe = Pipe()
+    public static func exifLocation(for url: URL, exiftool: ExiftoolProtocol = Exiftool()) throws -> [EXIFLocation] {
         
-        process.launchPath = "/usr/local/bin/exiftool"
-        process.arguments = [
+        return try exiftool.execute(arguments: [
             url.path,
             "-n", "-q", "-json",
             "-GPSLatitude", "-GPSLongitude", "-GPSStatus"
-        ]
-        
-        process.standardOutput = stdOutPipe
-        
-//        print(
-//            """
-//            running shell command:
-//            \(process.launchPath!) \
-//            \(process.arguments!.joined(separator: " "))
-//            """
-//        )
-        
-        process.launch()
-        
-        // Process Pipe into a String
-        let stdOutputData = stdOutPipe.fileHandleForReading.readDataToEndOfFile()
-//        let stdOutString = String(bytes: stdOutputData, encoding: String.Encoding.utf8)
-    
-        process.waitUntilExit()
-
-        if stdOutputData.isEmpty {
-            throw EXIFToolError.noImages(url)
-        }
-        let decoder = JSONDecoder()
-        let locations = try decoder.decode(Array<EXIFLocation>.self, from: stdOutputData)
-
-        return locations
+            ])
+//
+//        let process = Process()
+//        let stdOutPipe = Pipe()
+//
+//        process.launchPath = "/usr/local/bin/exiftool"
+//        process.arguments = [
+//            url.path,
+//            "-n", "-q", "-json",
+//            "-GPSLatitude", "-GPSLongitude", "-GPSStatus"
+//        ]
+//
+//        process.standardOutput = stdOutPipe
+//
+////        print(
+////            """
+////            running shell command:
+////            \(process.launchPath!) \
+////            \(process.arguments!.joined(separator: " "))
+////            """
+////        )
+//
+//        process.launch()
+//
+//        // Process Pipe into a String
+//        let stdOutputData = stdOutPipe.fileHandleForReading.readDataToEndOfFile()
+////        let stdOutString = String(bytes: stdOutputData, encoding: String.Encoding.utf8)
+//
+//        process.waitUntilExit()
+//
+//        if stdOutputData.isEmpty {
+//            throw EXIFToolError.noImages(url)
+//        }
+//        let decoder = JSONDecoder()
+//        let locations = try decoder.decode(Array<EXIFLocation>.self, from: stdOutputData)
+//
+//        return locations
         
     }
 }
