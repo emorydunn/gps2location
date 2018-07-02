@@ -85,27 +85,34 @@ class EXIFLocationTests: XCTestCase {
             status: .active
         )
         
-        writeTestFile(to: location.sourceURL)
-        
-        let placemarkExpectation = expectation(description: "Placemark")
-        
-        location.reverseGeocodeLocation { placemark in
-            guard placemark != nil else {
-                XCTAssert(false)
-                return
-            }
+        let testPlace = PlacemarkMock(
+            country: "United States",
+            administrativeArea: "CA",
+            locality: "San Francisco"
+        )
 
-            do {
-                XCTAssertNoThrow(try location.writeLocationInfo(from: placemark!))
-            } catch {
-                print(error)
-            }
-
-            placemarkExpectation.fulfill()
-            
-        }
+        XCTAssertNoThrow(
+            try location.writeLocationInfo(from: testPlace, exiftool: ExiftoolMockWriter())
+//            try location.writeLocationInfo(from: testPlace, exiftool: ExiftoolMockWriter())
+        )
         
-        wait(for: [placemarkExpectation], timeout: 5)
+//        location.reverseGeocodeLocation { placemark in
+//            guard placemark != nil else {
+//                XCTAssert(false)
+//                return
+//            }
+//
+//            do {
+//                XCTAssertNoThrow(try location.writeLocationInfo(from: placemark!))
+//            } catch {
+//                print(error)
+//            }
+//
+//            placemarkExpectation.fulfill()
+//
+//        }
+//
+//        wait(for: [placemarkExpectation], timeout: 5)
     }
 
 }
