@@ -36,9 +36,9 @@ do {
     print(error)
 } catch _ as Swift.DecodingError {
     print("ERROR: Could not read metadata from input")
-} catch let error as EXIFToolError {
-    print(error.localizedDescription)
-    
+//} catch let error as EXIFToolError {
+//    print(error.localizedDescription)
+//    
 } catch {
     print("Unknown error")
     print()
