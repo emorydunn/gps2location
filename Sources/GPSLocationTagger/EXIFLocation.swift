@@ -93,7 +93,7 @@ public struct EXIFLocation: Codable {
                     return
                 }
                 do {
-                    print("\(self.sourceURL.lastPathComponent) -> Updating location")
+                    print("\(self.sourceURL.lastPathComponent) -> Updating location \(place.country ?? "none"), \(place.state ?? "none"), \(place.city ?? "none")")
                     try self.writeLocationInfo(from: place)
                     completionHandler(true)
                 } catch {
