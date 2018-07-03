@@ -7,35 +7,31 @@
 
 import Foundation
 import CoreLocation
+import GPSLocationTagger
 
-class PlacemarkMock: CLPlacemark {
+class PlacemarkMock: IPTCLocation {
     
-    var _country: String?
-    var _administrativeArea: String?
-    var _locality: String?
+    var _country: String? = nil
+    var _administrativeArea: String? = nil
+    var _locality: String? = nil
     
     init(country: String? = nil, administrativeArea: String? = nil, locality: String? = nil) {
         
         self._country = country
         self._administrativeArea = administrativeArea
         self._locality = locality
-        
-        super.init()
+
     }
-    
-    required init?(coder aDecoder: NSCoder) {
-        super.init(coder: aDecoder)
-    }
-    
-    override var country: String? {
+
+    var country: String? {
         return _country
     }
     
-    override var administrativeArea: String? {
+    var state: String? {
         return _administrativeArea
     }
     
-    override var locality: String? {
+    var city: String? {
         return _locality
     }
 }

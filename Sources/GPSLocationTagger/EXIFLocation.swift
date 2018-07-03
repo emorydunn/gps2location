@@ -48,26 +48,22 @@ public struct EXIFLocation: Codable {
         return CLLocation(latitude: latitude, longitude: longitude)
     }
     
-    public func reverseGeocodeLocation(_ completionHandler: @escaping (CLPlacemark?) -> Void) {
-//        print("\(self.sourceURL.lastPathComponent) -> reverse geocode start")
-        
+    public func reverseGeocodeLocation(_ completionHandler: @escaping (IPTCLocation?) -> Void) {
+
         let geocoder = CLGeocoder()
         geocoder.reverseGeocodeLocation(self.asCoreLocation()) { (placemarks, error) in
             if error == nil {
                 let firstLocation = placemarks?[0]
-//                print("\(self.sourceURL.lastPathComponent) -> reverse geocode complete")
                 completionHandler(firstLocation)
             }
             else {
                 // An error occurred during geocoding.
-//                print("\(self.sourceURL.lastPathComponent) -> reverse geocode error")
                 completionHandler(nil)
             }
         }
-//        print("_returning from reverseGeocodeLocation")
     }
     
-    func writeLocationInfo(from placemark: CLPlacemark, exiftool: ExiftoolProtocol = Exiftool()) throws {
+    func writeLocationInfo(from placemark: IPTCLocation, exiftool: ExiftoolProtocol = Exiftool()) throws {
         var arguments = [
             sourceURL.path,
             "-m"
@@ -75,10 +71,10 @@ public struct EXIFLocation: Codable {
         if let value = placemark.country {
             arguments.append("-IPTC:Country-PrimaryLocationName=\(value)")
         }
-        if let value = placemark.administrativeArea {
+        if let value = placemark.state {
             arguments.append("-IPTC:Province-State=\(value)")
         }
-        if let value = placemark.locality {
+        if let value = placemark.city {
             arguments.append("-IPTC:City=\(value)")
         }
         
@@ -90,7 +86,6 @@ public struct EXIFLocation: Codable {
     public func writeLocationInfo(_ completionHandler: @escaping (Bool) -> Void) {
         switch status {
         case .active:
-//            print("\(self.sourceURL.lastPathComponent) -> Looking up")
             reverseGeocodeLocation { placemark in
                 guard let place = placemark else {
                     print("\(self.sourceURL.lastPathComponent) -> Skipping, File has no placemark")
@@ -111,7 +106,7 @@ public struct EXIFLocation: Codable {
             print("\(self.sourceURL.lastPathComponent) -> Skipping, GPS status void")
             completionHandler(false)
         }
-//        print("_returning from writeLocationInfo")
+
     }
     
 }
