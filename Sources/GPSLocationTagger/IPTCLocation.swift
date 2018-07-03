@@ -13,13 +13,10 @@ public protocol IPTCLocation {
     var country: String? { get }
     var state: String? { get }
     var city: String?  { get }
+    
 }
 
 extension CLPlacemark: IPTCLocation {
-    
-    public var country: String? {
-        return self.country
-    }
     
     public var state: String? {
         return self.administrativeArea
