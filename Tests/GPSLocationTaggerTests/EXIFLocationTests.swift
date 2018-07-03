@@ -15,38 +15,7 @@ class EXIFLocationTests: XCTestCase {
         let tempDir = URL(fileURLWithPath: NSTemporaryDirectory())
         return tempDir.appendingPathComponent(name)
     }
-    
-    func writeTestFile(to url: URL) {
-        let process = Process()
-        process.launchPath = "/usr/local/bin/convert"
-        process.arguments = [
-            "-size",
-            "800x800",
-            "xc:white",
-            url.path
-        ]
-        
-        process.launch()
-        process.waitUntilExit()
-    }
-    
-    
 
-    func testLocation() {
-        let latitude = 37.335013
-        let longitude = -122.008934
-        
-        let location = EXIFLocation(
-            sourceURL: tempFile(called: "CoreLocation.xmp"),
-            latitude: latitude,
-            longitude: longitude,
-            status: .active
-        )
-        
-        XCTAssertEqual(location.asCoreLocation(), CLLocation(latitude: latitude, longitude: longitude))
-        
-    }
-    
     func test_ReverseGeocode() {
         let latitude = 37.335013
         let longitude = -122.008934
@@ -85,34 +54,62 @@ class EXIFLocationTests: XCTestCase {
             status: .active
         )
         
-        let testPlace = PlacemarkMock(
-            country: "United States",
-            administrativeArea: "CA",
-            locality: "San Francisco"
+        
+        XCTAssertNoThrow(
+            try location.writeLocationInfo(from: PlacemarkMock(country: "United States"), exiftool: ExiftoolMockWriter())
+        )
+        XCTAssertNoThrow(
+            try location.writeLocationInfo(from: PlacemarkMock(administrativeArea: "CA"), exiftool: ExiftoolMockWriter())
+        )
+        XCTAssertNoThrow(
+            try location.writeLocationInfo(from: PlacemarkMock(locality: "Emeryville"), exiftool: ExiftoolMockWriter())
         )
 
-        XCTAssertNoThrow(
-            try location.writeLocationInfo(from: testPlace, exiftool: ExiftoolMockWriter())
-//            try location.writeLocationInfo(from: testPlace, exiftool: ExiftoolMockWriter())
+    }
+    
+    func test_writePlacemark_active() {
+        let latitude = 37.335013
+        let longitude = -122.008934
+        
+        let location = EXIFLocation(
+            sourceURL: tempFile(called: "CoreLocation.jpg"),
+            latitude: latitude,
+            longitude: longitude,
+            status: .active
         )
         
-//        location.reverseGeocodeLocation { placemark in
-//            guard placemark != nil else {
-//                XCTAssert(false)
-//                return
-//            }
-//
-//            do {
-//                XCTAssertNoThrow(try location.writeLocationInfo(from: placemark!))
-//            } catch {
-//                print(error)
-//            }
-//
-//            placemarkExpectation.fulfill()
-//
-//        }
-//
-//        wait(for: [placemarkExpectation], timeout: 5)
+        let writeExpectation = expectation(description: "writeExpectation")
+        
+        location.writeLocationInfo { success in
+            if success == true {
+                writeExpectation.fulfill()
+            }
+        }
+        
+        wait(for: [writeExpectation], timeout: 5)
+    }
+    
+    func test_writePlacemark_void() {
+        let latitude = 37.335013
+        let longitude = -122.008934
+        
+        let location = EXIFLocation(
+            sourceURL: tempFile(called: "CoreLocation.jpg"),
+            latitude: latitude,
+            longitude: longitude,
+            status: .void
+        )
+        
+        let writeExpectation = expectation(description: "writeExpectation")
+        location.writeLocationInfo { success in
+            if success == false {
+                writeExpectation.fulfill()
+            }
+            
+        }
+        
+        wait(for: [writeExpectation], timeout: 5)
+        
     }
 
 }
