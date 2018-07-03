@@ -18,19 +18,19 @@ class ExiftoolMockWriter: ExiftoolProtocol {
         self.trace = trace
     }
     
+    convenience init() {
+        self.init(exiftool: "", trace: nil)
+    }
+    
     public func execute(arguments: [String]) throws -> ProcessResult {
 
-        let url = URL(fileURLWithPath: "/")
-        let images = [
-            EXIFLocation(sourceURL: url, latitude: 100, longitude: -100, status: .active),
-            EXIFLocation(sourceURL: url, latitude: 200, longitude: -200, status: .active),
-            EXIFLocation(sourceURL: url, latitude: 100, longitude: -100, status: .void),
-        ]
+        let response = """
+        1 directories scanned
+        3 image files updated
+        """
+        let data = response.data(using: .utf8, allowLossyConversion: false)
         
-        let encoder = JSONEncoder()
-        let data = try! encoder.encode(images)
-        
-        return ProcessResult(terminationStatus: 0, response: data)
+        return ProcessResult(terminationStatus: 0, response: data!)
     }
     
     public func execute<T: Decodable>(arguments: [String]) throws -> T {
