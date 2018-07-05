@@ -48,21 +48,21 @@ public struct EXIFLocation: Codable {
         return CLLocation(latitude: latitude, longitude: longitude)
     }
     
-    public func reverseGeocodeLocation(_ completionHandler: @escaping (IPTCLocatable?) -> Void) {
-
-        let geocoder = CLGeocoder()
-        geocoder.reverseGeocodeLocation(self.asCoreLocation()) { (placemarks, error) in
-            if error == nil {
-                let firstLocation = placemarks?[0]
-                completionHandler(firstLocation)
-            }
-            else {
-                // An error occurred during geocoding.
-                print(error!.localizedDescription)
-                completionHandler(nil)
-            }
-        }
-    }
+//    public func reverseGeocodeLocation(_ completionHandler: @escaping (IPTCLocatable?) -> Void) {
+//
+//        let geocoder = CLGeocoder()
+//        geocoder.reverseGeocodeLocation(self.asCoreLocation()) { (placemarks, error) in
+//            if error == nil {
+//                let firstLocation = placemarks?[0]
+//                completionHandler(firstLocation)
+//            }
+//            else {
+//                // An error occurred during geocoding.
+//                print(error!.localizedDescription)
+//                completionHandler(nil)
+//            }
+//        }
+//    }
     
     func writeLocationInfo(from placemark: IPTCLocatable, exiftool: ExiftoolProtocol = Exiftool()) throws {
         var arguments = [
@@ -84,10 +84,10 @@ public struct EXIFLocation: Codable {
 
     }
     
-    public func writeLocationInfo(_ completionHandler: @escaping (Bool) -> Void) {
+    public func writeLocationInfo(geocoder: ReverseGeocoder, _ completionHandler: @escaping (Bool) -> Void) {
         switch status {
         case .active:
-            reverseGeocodeLocation { placemark in
+            geocoder.reverseGeocodeLocation(self) { placemark in
                 guard let place = placemark else {
                     print("\(self.sourceURL.lastPathComponent) -> Skipping, File has no placemark")
                     completionHandler(false)

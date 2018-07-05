@@ -11,9 +11,11 @@ import Foundation
 class LocationOperation: DAOperation {
     
     let location: EXIFLocation
+    let geocoder: ReverseGeocoder
     
-    init(withLocation location: EXIFLocation) {
+    init(withLocation location: EXIFLocation, geocoder: ReverseGeocoder) {
         self.location = location
+        self.geocoder = geocoder
     }
     
     override func start() {
@@ -23,7 +25,7 @@ class LocationOperation: DAOperation {
         }
         
         executing(true)
-        location.writeLocationInfo { success in
+        location.writeLocationInfo(geocoder: geocoder) { success in
             print("\(self.location.sourceURL.lastPathComponent) -> Operation complete: \(success)")
             
             self.executing(false)

@@ -10,14 +10,16 @@ import Foundation
 public struct LocationUpdater {
     
     public let sourceURLs: [URL]
+    public let geocoder: ReverseGeocoder
+    
     let operationQueue = OperationQueue()
     
-    public init(sourceURL: URL) {
-        self.init(sourceURLs: [sourceURL])
+    public init(sourceURL: URL, geocoder: ReverseGeocoder) {
+        self.init(sourceURLs: [sourceURL], geocoder: geocoder)
     }
     
-    public init(sourceURLs: [URL]) {
-        
+    public init(sourceURLs: [URL], geocoder: ReverseGeocoder) {
+
         self.sourceURLs = sourceURLs.reduce([]) { (previous, url) in
             
             if let contents = LocationUpdater.dcimContents(at: url) {
@@ -26,6 +28,7 @@ public struct LocationUpdater {
                 return previous + [url]
             }
         }
+        self.geocoder = geocoder
     }
     
     public func update(_ completionHandler: @escaping () -> Void) throws {
@@ -39,7 +42,7 @@ public struct LocationUpdater {
         operationQueue.maxConcurrentOperationCount = 1
 
         let ops = locations.map { location -> Operation in
-            let op = LocationOperation(withLocation: location)
+            let op = LocationOperation(withLocation: location, geocoder: geocoder)
 
             op.completionBlock = {
 
