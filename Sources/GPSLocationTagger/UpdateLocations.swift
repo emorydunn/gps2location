@@ -31,23 +31,28 @@ public struct LocationUpdater {
         self.geocoder = geocoder
     }
     
-    public func update(_ completionHandler: @escaping () -> Void) throws {
+    public func update(_ completionHandler: @escaping (Int, Int) -> Void) throws {
         let locations: [EXIFLocation] = try sourceURLs.reduce([]) { (previous, url) in
             return try EXIFLocation.exifLocation(for: url) + previous
         }
 
         print("Writing location information")
+        var locationUpdateCount = 0
         
         operationQueue.qualityOfService = .userInitiated
         operationQueue.maxConcurrentOperationCount = 1
 
         let ops = locations.map { location -> Operation in
-            let op = LocationOperation(withLocation: location, geocoder: geocoder)
+            let op = LocationOperation(withLocation: location, geocoder: geocoder) { success in
+                if success {
+                    locationUpdateCount += 1
+                }
+            }
 
             op.completionBlock = {
 
                 if self.operationQueue.operations.isEmpty {
-                    completionHandler()
+                    completionHandler(locationUpdateCount, locations.count)
                 }
             }
             return op

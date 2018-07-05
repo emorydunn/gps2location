@@ -35,7 +35,8 @@ do {
     // Test for DCIM
     let updater = LocationUpdater(sourceURLs: urls, geocoder: geocoder)
 
-    try updater.update() {
+    try updater.update() { success, total in
+        print("Updated \(success)/\(total)")
         CFRunLoopStop(CFRunLoopGetMain())
     }
     CFRunLoopRun()
