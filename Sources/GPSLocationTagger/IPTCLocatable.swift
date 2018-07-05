@@ -8,7 +8,7 @@
 import Foundation
 import CoreLocation
 
-public protocol IPTCLocation {
+public protocol IPTCLocatable {
     
     var country: String? { get }
     var state: String? { get }
@@ -16,7 +16,13 @@ public protocol IPTCLocation {
     
 }
 
-extension CLPlacemark: IPTCLocation {
+struct IPTCLocation: IPTCLocatable {
+    var country: String?
+    var state: String?
+    var city: String?
+}
+
+extension CLPlacemark: IPTCLocatable {
     
     public var state: String? {
         return self.administrativeArea
@@ -25,6 +31,6 @@ extension CLPlacemark: IPTCLocation {
     public var city: String? {
         return self.locality
     }
-    
-    
+
 }
+

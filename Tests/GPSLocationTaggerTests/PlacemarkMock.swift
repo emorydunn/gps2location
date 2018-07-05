@@ -9,7 +9,7 @@ import Foundation
 import CoreLocation
 import GPSLocationTagger
 
-class PlacemarkMock: IPTCLocation {
+class PlacemarkMock: IPTCLocatable {
     
     var _country: String? = nil
     var _administrativeArea: String? = nil

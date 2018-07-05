@@ -48,7 +48,7 @@ public struct EXIFLocation: Codable {
         return CLLocation(latitude: latitude, longitude: longitude)
     }
     
-    public func reverseGeocodeLocation(_ completionHandler: @escaping (IPTCLocation?) -> Void) {
+    public func reverseGeocodeLocation(_ completionHandler: @escaping (IPTCLocatable?) -> Void) {
 
         let geocoder = CLGeocoder()
         geocoder.reverseGeocodeLocation(self.asCoreLocation()) { (placemarks, error) in
@@ -58,12 +58,13 @@ public struct EXIFLocation: Codable {
             }
             else {
                 // An error occurred during geocoding.
+                print(error!.localizedDescription)
                 completionHandler(nil)
             }
         }
     }
     
-    func writeLocationInfo(from placemark: IPTCLocation, exiftool: ExiftoolProtocol = Exiftool()) throws {
+    func writeLocationInfo(from placemark: IPTCLocatable, exiftool: ExiftoolProtocol = Exiftool()) throws {
         var arguments = [
             sourceURL.path,
             "-m"
