@@ -54,6 +54,7 @@ extension ExiftoolProtocol {
         process.arguments = arguments
         
         process.standardOutput = stdOutPipe
+        process.standardError = stdOutPipe
         
         trace?("""
             \(process.launchPath!) \
