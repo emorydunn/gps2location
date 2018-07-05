@@ -12,10 +12,15 @@ public protocol ReverseGeocoder {
     func reverseGeocodeLocation(_ location: EXIFLocation, completionHandler: @escaping (IPTCLocatable?) -> Void)
 }
 
-extension CLGeocoder: ReverseGeocoder {
+public class AppleGeocoder: ReverseGeocoder {
+    
+    public init() {
+        
+    }
+    
     public func reverseGeocodeLocation(_ location: EXIFLocation, completionHandler: @escaping (IPTCLocatable?) -> Void) {
-//        let geocoder = CLGeocoder()
-        self.reverseGeocodeLocation(location.asCoreLocation()) { (placemarks, error) in
+        let geocoder = CLGeocoder()
+        geocoder.reverseGeocodeLocation(location.asCoreLocation()) { (placemarks, error) in
             if error == nil {
                 let firstLocation = placemarks?[0]
                 completionHandler(firstLocation)
@@ -27,11 +32,13 @@ extension CLGeocoder: ReverseGeocoder {
             }
         }
     }
-    
-    
 }
 
 public class GoogleGeocoder: ReverseGeocoder {
+    
+    public init() {
+        
+    }
     
     public func reverseGeocodeLocation(_ location: EXIFLocation, completionHandler: @escaping (IPTCLocatable?) -> Void) {
         
@@ -41,8 +48,6 @@ public class GoogleGeocoder: ReverseGeocoder {
         }
         
         let task = URLSession.shared.dataTask(with: url) { (data, response, error) in
-            print("Response")
-            
             guard let data = data, let dict = try! JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] else {
                  completionHandler(nil)
                 return
