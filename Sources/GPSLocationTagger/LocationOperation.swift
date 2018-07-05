@@ -26,7 +26,7 @@ class LocationOperation: DAOperation {
         
         executing(true)
         location.writeLocationInfo(geocoder: geocoder) { success in
-            print("\(self.location.sourceURL.lastPathComponent) -> Operation complete: \(success)")
+//            print("\(self.location.sourceURL.lastPathComponent) -> Operation complete: \(success)")
             
             self.executing(false)
             self.finish(true)
