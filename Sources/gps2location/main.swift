@@ -6,9 +6,9 @@ let version = Version(0, 1, 0)
 
 let mainParser = ArgumentParser(usage: "[OPTIONS] FILE...", overview: "Updates image IPTC location from GPS coordinates")
 let versionCommand = mainParser.add(option: "--version", kind: Bool.self, usage: "Prints the version and exits")
-let googleMapsOption = mainParser.add(option: "--google", kind: Bool.self, usage: "Use Google Maps API")
+let googleMapsOption = mainParser.add(option: "--google", shortName: "-g", kind: Bool.self, usage: "Use Google Maps API")
 
-let input = mainParser.add(positional: "file", kind: Array<String>.self, usage: "A single file, a directory of images, or a camera card")
+let input = mainParser.add(positional: "file", kind: Array<String>.self, optional: false, usage: "A single file, a directory of images, or a camera card")
 
 do {
     let args = CommandLine.arguments.dropFirst()
