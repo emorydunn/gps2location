@@ -7,6 +7,7 @@ let version = Version(0, 1, 0)
 let mainParser = ArgumentParser(usage: "[OPTIONS] FILE...", overview: "Updates image IPTC location from GPS coordinates")
 let versionCommand = mainParser.add(option: "--version", kind: Bool.self, usage: "Prints the version and exits")
 let googleMapsOption = mainParser.add(option: "--google", shortName: "-g", kind: Bool.self, usage: "Use Google Maps API")
+let dryRunOption = mainParser.add(option: "--dry-run", kind: Bool.self, usage: "Only perform lookup, don't update metadata")
 
 let input = mainParser.add(positional: "file", kind: Array<String>.self, optional: false, usage: "A single file, a directory of images, or a camera card")
 
@@ -43,8 +44,9 @@ do {
 
 } catch let error as ArgumentParserError {
     print(error)
-} catch _ as Swift.DecodingError {
+} catch let e as Swift.DecodingError {
     print("ERROR: Could not read metadata from input")
+    print(e)
 //} catch let error as EXIFToolError {
 //    print(error.localizedDescription)
 //    
