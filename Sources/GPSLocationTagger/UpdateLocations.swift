@@ -73,12 +73,12 @@ extension LocationUpdater {
         FileManager.default.fileExists(atPath: dcimURL.path, isDirectory: &isDir)
         
         if isDir.boolValue {
-            let dcimContents = try? FileManager.default.contentsOfDirectory(atPath: dcimURL.path)
-            
-            return dcimContents?.filter { name in
-                name.range(of: "\\d{3}\\w{5}", options: .regularExpression) != nil
-                }.map { name in
-                    dcimURL.appendingPathComponent(name)
+            NSLog("Reading contents of \(dcimURL.path)")
+
+            let dcimContents = try? FileManager.default.contentsOfDirectory(at: dcimURL, includingPropertiesForKeys: nil, options: FileManager.DirectoryEnumerationOptions.skipsHiddenFiles)
+
+            return dcimContents?.filter { url in
+                url.lastPathComponent.range(of: "\\d{3}\\w{5}", options: .regularExpression) != nil
                 }
 
         }
