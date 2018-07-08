@@ -11,14 +11,15 @@ public struct LocationUpdater {
     
     public let sourceURLs: [URL]
     public let geocoder: ReverseGeocoder
+    public let dryRun: Bool
     
     let operationQueue = OperationQueue()
     
-    public init(sourceURL: URL, geocoder: ReverseGeocoder) {
-        self.init(sourceURLs: [sourceURL], geocoder: geocoder)
+    public init(sourceURL: URL, geocoder: ReverseGeocoder, dryRun: Bool) {
+        self.init(sourceURLs: [sourceURL], geocoder: geocoder, dryRun: dryRun)
     }
     
-    public init(sourceURLs: [URL], geocoder: ReverseGeocoder) {
+    public init(sourceURLs: [URL], geocoder: ReverseGeocoder, dryRun: Bool) {
 
         self.sourceURLs = sourceURLs.reduce([]) { (previous, url) in
             
@@ -29,6 +30,7 @@ public struct LocationUpdater {
             }
         }
         self.geocoder = geocoder
+        self.dryRun = dryRun
     }
     
     public func update(_ completionHandler: @escaping (Int, Int) -> Void) throws {
@@ -48,7 +50,7 @@ public struct LocationUpdater {
                     locationUpdateCount += 1
                 }
             }
-
+            op.dryRun = self.dryRun
             op.completionBlock = {
 
                 if self.operationQueue.operations.isEmpty {

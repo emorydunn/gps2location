@@ -36,7 +36,7 @@ do {
     let urls = profilePath.map { URL(fileURLWithPath: $0) }
 
     // Test for DCIM
-    let updater = LocationUpdater(sourceURLs: urls, geocoder: geocoder)
+    let updater = LocationUpdater(sourceURLs: urls, geocoder: geocoder, dryRun: results.get(dryRunOption) ?? false)
 
     try updater.update() { success, total in
         print("Updated \(success)/\(total)")
