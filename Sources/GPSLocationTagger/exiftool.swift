@@ -23,9 +23,22 @@ public class Exiftool: ExiftoolProtocol {
     public var exiftoolLocation: String
     public var trace: TraceFunction?
     
-    public required init(exiftool: String = "/usr/local/bin/exiftool", trace: TraceFunction? = nil) {
+    public required init(exiftool: String = "/usr/local/bin/exiftool", trace: TraceFunction?) {
         self.exiftoolLocation = exiftool
         self.trace = trace
+    }
+    
+    public required init(exiftool: String = "/usr/local/bin/exiftool") {
+        self.exiftoolLocation = exiftool
+        self.trace = { command, response in
+            if let command = command {
+                NSLog(command)
+            }
+            if let data = response, let respnseString = String(data: data, encoding: .utf8) {
+                NSLog(respnseString)
+            }
+        }
+        
     }
 }
 
