@@ -48,6 +48,19 @@ public struct EXIFLocation: Codable {
         return CLLocation(latitude: latitude, longitude: longitude)
     }
     
+    public init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        
+        // exiftool returns un-escaped URLS
+        // JSONDecoder is looking for an escaped string, and fails
+        let urlString = try values.decode(String.self, forKey: .sourceURL)
+        self.sourceURL = URL(fileURLWithPath: urlString)
+        
+        self.latitude = try values.decode(Double.self, forKey: .latitude)
+        self.longitude = try values.decode(Double.self, forKey: .longitude)
+        self.status = try values.decode(GPSStatus.self, forKey: .status)
+    }
+    
 //    public func reverseGeocodeLocation(_ completionHandler: @escaping (IPTCLocatable?) -> Void) {
 //
 //        let geocoder = CLGeocoder()
@@ -115,6 +128,7 @@ public struct EXIFLocation: Codable {
 extension EXIFLocation {
     
     public static func exifLocation(for url: URL, exiftool: ExiftoolProtocol = Exiftool()) throws -> [EXIFLocation] {
+        NSLog("Reading exif for \(url.path)")
         
         return try exiftool.execute(arguments: [
             url.path,
