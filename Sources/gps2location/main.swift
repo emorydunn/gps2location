@@ -6,7 +6,8 @@ let version = Version(0, 1, 0)
 
 let mainParser = ArgumentParser(usage: "[OPTIONS] FILE...", overview: "Updates image IPTC location from GPS coordinates")
 let versionCommand = mainParser.add(option: "--version", kind: Bool.self, usage: "Prints the version and exits")
-let googleMapsOption = mainParser.add(option: "--google", shortName: "-g", kind: Bool.self, usage: "Use Google Maps API")
+
+let geocodeAPI = mainParser.add(option: "--api", kind: String.self, usage: "Geocoding API to use, defaults to Google [ google | apple ]")
 
 
 let dryRunOption = mainParser.add(option: "--dry-run", kind: Bool.self, usage: "Only perform lookup, don't update metadata")
@@ -23,12 +24,15 @@ do {
     }
     
     let geocoder: ReverseGeocoder
-    if results.get(googleMapsOption) ?? false {
-        geocoder = GoogleGeocoder()
-    } else {
+    switch results.get(geocodeAPI) {
+    case "apple":
         geocoder = AppleGeocoder()
+    case "google":
+        geocoder = GoogleGeocoder()
+    default:
+        geocoder = GoogleGeocoder()
     }
-    
+
     guard let profilePath = results.get(input) else {
         exit(EXIT_FAILURE)
     }
