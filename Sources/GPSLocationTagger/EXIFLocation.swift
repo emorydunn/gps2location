@@ -94,7 +94,7 @@ public struct EXIFLocation: Codable {
             arguments.append("-IPTC:City=\(value)")
         }
         if let value = placemark.neighborhood {
-            arguments.append("-IPTC:Location=\(value)")
+            arguments.append("-IPTC:Sub-location=\(value)")
         }
         
         // Keywords
