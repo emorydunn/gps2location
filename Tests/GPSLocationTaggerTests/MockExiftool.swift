@@ -53,7 +53,12 @@ class ExiftoolMockReader: ExiftoolProtocol {
         self.trace = trace
     }
     
+    convenience init() {
+        self.init(exiftool: "", trace: nil)
+    }
+    
     public func execute(arguments: [String]) throws -> ProcessResult {
+        print("Accpeting args: \(arguments)")
         
         let url = URL(fileURLWithPath: "/")
         let images = [
@@ -65,6 +70,7 @@ class ExiftoolMockReader: ExiftoolProtocol {
         let encoder = JSONEncoder()
         let data = try! encoder.encode(images)
         
+        print("Returning mock data")
         return ProcessResult(terminationStatus: 0, response: data)
     }
     

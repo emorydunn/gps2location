@@ -11,27 +11,19 @@ import GPSLocationTagger
 
 class PlacemarkMock: IPTCLocatable {
     
-    var _country: String? = nil
-    var _administrativeArea: String? = nil
-    var _locality: String? = nil
+    var country: String?
+    var state: String?
+    var city: String?
+    var route: String?
+    var neighborhood: String?
     
-    init(country: String? = nil, administrativeArea: String? = nil, locality: String? = nil) {
-        
-        self._country = country
-        self._administrativeArea = administrativeArea
-        self._locality = locality
+    init(country: String? = nil, state: String? = nil, city: String? = nil, route: String? = nil, neighborhood: String? = nil) {
+    
+        self.country = country
+        self.state = state
+        self.city = city
+        self.route = route
+        self.neighborhood = neighborhood
+    }
 
-    }
-
-    var country: String? {
-        return _country
-    }
-    
-    var state: String? {
-        return _administrativeArea
-    }
-    
-    var city: String? {
-        return _locality
-    }
 }
