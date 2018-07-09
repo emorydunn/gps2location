@@ -16,7 +16,7 @@ class EXIFLocationTests: XCTestCase {
         return tempDir.appendingPathComponent(name)
     }
 
-    func test_ReverseGeocode() {
+    func test_Init() {
         let latitude = 37.335013
         let longitude = -122.008934
         
@@ -27,89 +27,14 @@ class EXIFLocationTests: XCTestCase {
             status: .active
         )
         
-        let placemarkExpectation = expectation(description: "Placemark")
+        let encoder = JSONEncoder()
+        let decoder = JSONDecoder()
         
-        location.reverseGeocodeLocation { placemark in
-            guard placemark != nil else {
-                XCTAssert(false)
-                return
-            }
-            
-            placemarkExpectation.fulfill()
-            
-        }
-        
-        wait(for: [placemarkExpectation], timeout: 5)
-        
-    }
-    
-    func test_writePlacemark() {
-        let latitude = 37.335013
-        let longitude = -122.008934
-        
-        let location = EXIFLocation(
-            sourceURL: tempFile(called: "CoreLocation.jpg"),
-            latitude: latitude,
-            longitude: longitude,
-            status: .active
-        )
-        
-        
-        XCTAssertNoThrow(
-            try location.writeLocationInfo(from: PlacemarkMock(country: "United States"), exiftool: ExiftoolMockWriter())
-        )
-        XCTAssertNoThrow(
-            try location.writeLocationInfo(from: PlacemarkMock(administrativeArea: "CA"), exiftool: ExiftoolMockWriter())
-        )
-        XCTAssertNoThrow(
-            try location.writeLocationInfo(from: PlacemarkMock(locality: "Emeryville"), exiftool: ExiftoolMockWriter())
-        )
+        let data = try! encoder.encode(location)
 
+        XCTAssertNoThrow(try decoder.decode(EXIFLocation.self, from: data))
+        
     }
     
-    func test_writePlacemark_active() {
-        let latitude = 37.335013
-        let longitude = -122.008934
-        
-        let location = EXIFLocation(
-            sourceURL: tempFile(called: "CoreLocation.jpg"),
-            latitude: latitude,
-            longitude: longitude,
-            status: .active
-        )
-        
-        let writeExpectation = expectation(description: "writeExpectation")
-        
-        location.writeLocationInfo { success in
-            if success == true {
-                writeExpectation.fulfill()
-            }
-        }
-        
-        wait(for: [writeExpectation], timeout: 5)
-    }
-    
-    func test_writePlacemark_void() {
-        let latitude = 37.335013
-        let longitude = -122.008934
-        
-        let location = EXIFLocation(
-            sourceURL: tempFile(called: "CoreLocation.jpg"),
-            latitude: latitude,
-            longitude: longitude,
-            status: .void
-        )
-        
-        let writeExpectation = expectation(description: "writeExpectation")
-        location.writeLocationInfo { success in
-            if success == false {
-                writeExpectation.fulfill()
-            }
-            
-        }
-        
-        wait(for: [writeExpectation], timeout: 5)
-        
-    }
 
 }

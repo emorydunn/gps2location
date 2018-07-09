@@ -20,7 +20,8 @@ public class AppleGeocoder: ReverseGeocoder {
     
     public func reverseGeocodeLocation(_ location: EXIFLocation, completionHandler: @escaping (IPTCLocatable?) -> Void) {
         let geocoder = CLGeocoder()
-        geocoder.reverseGeocodeLocation(location.asCoreLocation()) { (placemarks, error) in
+        let coreLocation = CLLocation(latitude: location.latitude, longitude: location.longitude)
+        geocoder.reverseGeocodeLocation(coreLocation) { (placemarks, error) in
             if error == nil {
                 let firstLocation = placemarks?[0]
                 completionHandler(firstLocation)
