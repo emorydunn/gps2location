@@ -1,6 +1,7 @@
 import Foundation
 import GPSLocationTagger
 import Utility
+import Basic
 
 let version = Version(0, 1, 0)
 
@@ -21,13 +22,23 @@ do {
         geocoder = GoogleGeocoder()
     }
 
-    let updater = LocationUpdater(sourceURLs: options.input, geocoder: geocoder, dryRun: options.shouldPerformDryRun)
+    let updater = LocationUpdater(sourceURLs: options.input, geocoder: geocoder, exiftool: Exiftool(), dryRun: options.shouldPerformDryRun)
     
-    try updater.update() { success, total in
-        print("Updated \(success)/\(total)")
-        CFRunLoopStop(CFRunLoopGetMain())
+    updater.update { (_, _) in
+        
     }
-    CFRunLoopRun()
+    
+//    let terminalController = TerminalController(stream: stdoutStream as! LocalFileOutputByteStream)
+
+//    let readBar = createProgressBar(forStream: stdoutStream, header: "Reading EXIF")
+//    let readBar = ProgressBar(
+//    readBar.
+    
+//    try updater.update() { success, total in
+//        print("Updated \(success)/\(total)")
+//        CFRunLoopStop(CFRunLoopGetMain())
+//    }
+//    CFRunLoopRun()
     
 } catch {
     print(error)

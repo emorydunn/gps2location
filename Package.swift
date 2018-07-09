@@ -27,7 +27,7 @@ let package = Package(
         
         .target(
             name: "GPSLocationTagger",
-            dependencies: []),
+            dependencies: ["Utility"]),
         .testTarget(
             name: "GPSLocationTaggerTests",
             dependencies: ["GPSLocationTagger"]),
