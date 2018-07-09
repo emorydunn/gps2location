@@ -10,7 +10,7 @@ OVERVIEW: Updates image IPTC location from GPS coordinates
 USAGE: gps2location [OPTIONS] FILE...
 
 OPTIONS:
-  --api       Geocoding API to use, defaults to Google [ google | apple ]
+  --api       Geocoding API to use (google|apple) [default: google]
   --dry-run   Only perform lookup, don't update metadata
   --version   Prints the version and exits
   --help      Display available options
