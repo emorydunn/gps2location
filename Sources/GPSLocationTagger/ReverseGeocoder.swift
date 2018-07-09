@@ -55,7 +55,7 @@ public class GoogleGeocoder: ReverseGeocoder {
             
             completionHandler(self.extractPlace(from: dict))
         }
-        
+        NSLog("Fetching Location from \(url.path)")
         task.resume()
 
     }
@@ -74,7 +74,7 @@ public class GoogleGeocoder: ReverseGeocoder {
             GooglePlace(fromJSONDict: json)
         }
         
-        var location = IPTCLocation(country: nil, state: nil, city: nil)
+        var location = IPTCLocation(country: nil, state: nil, city: nil, route: nil, neighborhood: nil)
         places.forEach { place in
             if place.types.contains("country") {
                 location.country = place.longName
@@ -82,7 +82,12 @@ public class GoogleGeocoder: ReverseGeocoder {
                 location.state = place.longName
             } else if place.types.contains("locality") {
                 location.city = place.longName
+            } else if place.types.contains("route") {
+                location.route = place.longName
+            } else if place.types.contains("neighborhood") {
+                location.neighborhood = place.longName
             }
+            
             
         }
         return location

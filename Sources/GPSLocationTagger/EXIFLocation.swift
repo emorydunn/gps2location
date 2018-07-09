@@ -82,6 +82,8 @@ public struct EXIFLocation: Codable {
             sourceURL.path,
             "-m"
         ]
+        
+        // IPTC Location
         if let value = placemark.country {
             arguments.append("-IPTC:Country-PrimaryLocationName=\(value)")
         }
@@ -90,6 +92,14 @@ public struct EXIFLocation: Codable {
         }
         if let value = placemark.city {
             arguments.append("-IPTC:City=\(value)")
+        }
+        if let value = placemark.neighborhood {
+            arguments.append("-IPTC:Location=\(value)")
+        }
+        
+        // Keywords
+        if let value = placemark.route {
+            arguments.append("-keywords=\(value)")
         }
         
         _ = try exiftool.execute(arguments: arguments)
