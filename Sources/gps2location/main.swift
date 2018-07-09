@@ -4,43 +4,31 @@ import Utility
 
 let version = Version(0, 1, 0)
 
-let mainParser = ArgumentParser(usage: "[OPTIONS] FILE...", overview: "Updates image IPTC location from GPS coordinates")
-let versionCommand = mainParser.add(option: "--version", kind: Bool.self, usage: "Prints the version and exits")
-
-let input = mainParser.add(positional: "file", kind: Array<String>.self, usage: "A single file, a directory of images, or a camera card")
-
 do {
-    let args = CommandLine.arguments.dropFirst()
-    let results = try mainParser.parse(Array(args))
+    let parser = OptionParser(arguments: Array(CommandLine.arguments.dropFirst()))
+    let options = parser.options
     
-    if let _ = results.get(versionCommand) {
+    if options.shouldPrintVersion {
         print("gps2location \(version)")
         exit(0)
     }
     
-    guard let profilePath = results.get(input) else {
-        exit(EXIT_FAILURE)
+    let geocoder: ReverseGeocoder
+    switch options.api {
+    case .apple:
+        geocoder = AppleGeocoder()
+    case .google:
+        geocoder = GoogleGeocoder()
     }
-    
-    let urls = profilePath.map { URL(fileURLWithPath: $0) }
-    
-    // Test for DCIM
-    let updater = LocationUpdater(sourceURLs: urls)
 
-    try updater.update() {
+    let updater = LocationUpdater(sourceURLs: options.input, geocoder: geocoder, dryRun: options.shouldPerformDryRun)
+    
+    try updater.update() { success, total in
+        print("Updated \(success)/\(total)")
         CFRunLoopStop(CFRunLoopGetMain())
     }
     CFRunLoopRun()
-
-} catch let error as ArgumentParserError {
-    print(error)
-} catch _ as Swift.DecodingError {
-    print("ERROR: Could not read metadata from input")
-} catch let error as EXIFToolError {
-    print(error.localizedDescription)
     
 } catch {
-    print("Unknown error")
-    print()
     print(error)
 }
