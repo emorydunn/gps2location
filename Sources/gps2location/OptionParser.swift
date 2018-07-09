@@ -5,13 +5,30 @@
 //  Created by Emory Dunn on 2018-07-08.
 //
 
+import Foundation
 import Utility
 import POSIX
 import Basic
 
+enum GeocodingAPI: String, ArgumentKind {
+
+    case apple
+    case google
+    
+    public init(argument: String) throws {
+        guard let api = GeocodingAPI(rawValue: argument) else {
+            throw ArgumentConversionError.unknown(value: argument)
+        }
+        self = api
+    }
+    
+    static var completion: ShellCompletion = ShellCompletion.none
+    
+}
+
 struct Options {
-    var input: [String] = []
-    var api = "google"
+    var input: [Foundation.URL] = []
+    var api = GeocodingAPI.google
     var shouldPrintVersion: Bool = false
     var shouldPerformDryRun: Bool = false
 }
@@ -24,11 +41,10 @@ struct OptionParser {
         parser = ArgumentParser(usage: "[OPTIONS] FILE...", overview: "Updates image IPTC location from GPS coordinates")
         
         let binder = ArgumentBinder<Options>()
-        
         binder.bind(
             positional: parser.add(
                 positional: "file",
-                kind: [String].self,
+                kind: [Foundation.URL].self,
                 optional: false,
                 usage: "A single file, a directory of images, or a camera card"
             ),
@@ -38,7 +54,7 @@ struct OptionParser {
         binder.bind(
             option: parser.add(
                 option: "--api",
-                kind: String.self,
+                kind: GeocodingAPI.self,
                 usage: "Geocoding API to use (google|apple) [default: google]"
             ),
             to: {
@@ -84,3 +100,12 @@ struct OptionParser {
     }
 }
 
+
+extension Foundation.URL: ArgumentKind {
+    public init(argument: String) throws {
+        self.init(fileURLWithPath: argument)
+    }
+    
+    public static var completion: ShellCompletion = .filename
+
+}

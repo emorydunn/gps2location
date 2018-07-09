@@ -15,17 +15,13 @@ do {
     
     let geocoder: ReverseGeocoder
     switch options.api {
-    case "apple":
+    case .apple:
         geocoder = AppleGeocoder()
-    case "google":
-        geocoder = GoogleGeocoder()
-    default:
+    case .google:
         geocoder = GoogleGeocoder()
     }
-    
-    let urls = options.input.map { URL(fileURLWithPath: $0) }
-    
-    let updater = LocationUpdater(sourceURLs: urls, geocoder: geocoder, dryRun: options.shouldPerformDryRun)
+
+    let updater = LocationUpdater(sourceURLs: options.input, geocoder: geocoder, dryRun: options.shouldPerformDryRun)
     
     try updater.update() { success, total in
         print("Updated \(success)/\(total)")
