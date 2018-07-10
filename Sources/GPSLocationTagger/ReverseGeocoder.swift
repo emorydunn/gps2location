@@ -56,7 +56,7 @@ public class GoogleGeocoder: ReverseGeocoder {
             
             completionHandler(self.extractPlace(from: dict))
         }
-        NSLog("Fetching Location from \(url.path)")
+//        NSLog("Fetching Location from \(url.path)")
         task.resume()
 
     }
