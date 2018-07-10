@@ -70,7 +70,7 @@ class ExifReaderOperation: DAOperation {
                 "-n", "-q", "-json",
                 "-GPSLatitude", "-GPSLongitude", "-GPSStatus"
                 ])
-            print("Operation with \(locations.count) locations")
+
         } catch {
             print("error: could not read images")
         }
@@ -86,7 +86,8 @@ class ReverseGeocodeOperation: DAOperation {
     let location: EXIFLocation
     let geocoder: ReverseGeocoder
     
-    var responseData: IPTCLocatable? = nil
+    var place: IPTCLocatable? = nil
+    var statusText: String = "Geocode pending"
     
     init(location: EXIFLocation, geocoder: ReverseGeocoder) {
         self.location = location
@@ -103,13 +104,21 @@ class ReverseGeocodeOperation: DAOperation {
         switch location.status {
         case .active:
             geocoder.reverseGeocodeLocation(location) { place in
-                print("Operation assigning place")
-                self.responseData = place
+
+                self.place = place
+                if place == nil {
+                    self.statusText = "\(self.location.sourceURL.lastPathComponent) -> Could not fetch place"
+                } else {
+                    self.statusText = ""
+                }
+                
+                
                 self.executing(false)
                 self.finish(true)
             }
         case .void:
-            print("Operation location void")
+
+            self.statusText = "\(self.location.sourceURL.lastPathComponent) -> GPS status void"
             self.executing(false)
             self.finish(true)
         }
@@ -120,18 +129,33 @@ class ReverseGeocodeOperation: DAOperation {
 class ExifWriterOperation: DAOperation {
     
     let location: EXIFLocation
-    let place: IPTCLocatable
-    let exiftool: ExiftoolProtocol
+    var place: IPTCLocatable?
     
-    init(location: EXIFLocation, place: IPTCLocatable, exiftool: ExiftoolProtocol) {
+    let exiftool: ExiftoolProtocol
+    let dryRun: Bool
+    
+    var success = false
+    var statusText = "Write pending"
+    
+    init(location: EXIFLocation, place: IPTCLocatable?, exiftool: ExiftoolProtocol, dryRun: Bool) {
         self.location = location
         self.place = place
         self.exiftool = exiftool
+        self.dryRun = dryRun
     }
     
     override func start() {
-        guard isCancelled == false else {
+        guard isCancelled == false, let place = place else {
+            self.statusText = ""
             finish(true)
+            return
+        }
+
+        self.statusText = "\(self.location.sourceURL.lastPathComponent) -> \(place.description)"
+        
+        if dryRun {
+            success = true
+            self.finish(true)
             return
         }
         
@@ -162,8 +186,9 @@ class ExifWriterOperation: DAOperation {
         
         do {
             _ = try exiftool.execute(arguments: arguments)
+            success = true
         } catch {
-            print("error: could not write to \(location.sourceURL.lastPathComponent)")
+            self.statusText = "\(self.location.sourceURL.lastPathComponent) -> Could not write EXIF"
         }
         
         self.executing(false)

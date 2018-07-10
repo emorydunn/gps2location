@@ -6,34 +6,33 @@
 //
 
 import Foundation
-import Utility
-import Basic
 
 public class LocationUpdater {
     
     public let sourceURLs: [Foundation.URL]
+    
     public let geocoder: ReverseGeocoder
-    public let dryRun: Bool
     public let exiftool: ExiftoolProtocol
     
-//    let operationQueue = OperationQueue()
+    public let dryRun: Bool
+
+    /// Unique image URLs
+    var exifLocations = Set<Foundation.URL>()
     
-    var progressBar: ProgressBarProtocol? = nil
-    
-    let exifReadQueue = OperationQueue()
-    let geocodeQueue = OperationQueue()
-    let exifWriteQueue = OperationQueue()
+    /// Count of locations written successfully
+    var succusfulExifLocations = Set<Foundation.URL>()
+
+    let omniQueue = OperationQueue()
     
     public convenience init(sourceURL: Foundation.URL, geocoder: ReverseGeocoder, exiftool: ExiftoolProtocol, dryRun: Bool) {
         self.init(sourceURLs: [sourceURL], geocoder: geocoder, exiftool: exiftool, dryRun: dryRun)
-        
-//        self.progressBar = createProgressBar(forStream: stdoutStream, header: "Update")
+
     }
     
     public init(sourceURLs: [Foundation.URL], geocoder: ReverseGeocoder, exiftool: ExiftoolProtocol, dryRun: Bool) {
 
+        // For each URL attempt to get DCIM contents
         self.sourceURLs = sourceURLs.reduce([]) { (previous, url) in
-            
             if let contents = LocationUpdater.dcimContents(at: url) {
                 return previous + contents
             } else {
@@ -44,123 +43,107 @@ public class LocationUpdater {
         self.exiftool = exiftool
         self.dryRun = dryRun
         
+        // Queue Settings
+        omniQueue.maxConcurrentOperationCount = 1
+        
     }
     
-
-    func addToQueue(_ urls: [Foundation.URL]) -> [EXIFLocation] {
-        self.progressBar = createProgressBar(forStream: stdoutStream, header: "Reading EXIF")
-
-        var locations = [EXIFLocation]()
-        let operations = urls.map { url -> ExifReaderOperation in
-            let op = ExifReaderOperation(source: url, exiftool: exiftool)
+    /// Use `exiftool` to get images for the given URL and create operations
+    ///
+    /// - Parameter url: URL to pass to `exiftool`
+    func addToOmniQueue(_ url: Foundation.URL) {
+        print("Read contents of \(url.lastPathComponent)\(self.dryRun ? " (dry run)" : "")")
+        do {
+            let locations: [EXIFLocation] = try exiftool.execute(arguments: [
+                url.path,
+                "-n", "-q", "-json",
+                "-GPSLatitude", "-GPSLongitude", "-GPSStatus"
+                ])
             
-            op.completionBlock = {
-                locations.append(contentsOf: op.locations)
-                
-                self.progressBar?.update(percent: urls.count - self.exifReadQueue.operationCount, text: op.source.lastPathComponent)
+            locations.forEach { location in
+                self.addToQueue(location)
             }
             
-            return op
+        } catch {
+            print("error: could not read images")
         }
         
-        exifReadQueue.addOperations(operations, waitUntilFinished: true)
-
-        self.progressBar?.complete(success: true)
-        
-        return locations
     }
-    
-    func addToQueue(_ locations: [EXIFLocation], waitUntilFinished: Bool) {
-        self.progressBar = createProgressBar(forStream: stdoutStream, header: "Reverse Geocoding")
+
+    /// Create a ReverseGeocoding and EXIFWrite operation for the given locaiton
+    ///
+    /// - Parameter location: An EXIFLocation to look up and update
+    func addToQueue(_ location: EXIFLocation) {
+        // Create the operations
+        let geocodeOperation = ReverseGeocodeOperation(location: location, geocoder: geocoder)
+        let writeOperation = ExifWriterOperation(location: location, place: nil, exiftool: exiftool, dryRun: dryRun)
+
+        // Add to the set of URLS
+        exifLocations.insert(location.sourceURL)
         
-        let operations = locations.map { location -> ReverseGeocodeOperation in
-            let op = ReverseGeocodeOperation(location: location, geocoder: geocoder)
-            
-            op.completionBlock  = {
-                if let place = op.responseData {
-                    self.addToQueue(op.location, place: place)
-                }
-                
-                self.progressBar?.update(percent: locations.count - self.geocodeQueue.operationCount, text: op.location.sourceURL.lastPathComponent)
-                
+        geocodeOperation.completionBlock = {
+            if !geocodeOperation.statusText.isEmpty {
+                print(geocodeOperation.statusText)
             }
             
-            return op
+            writeOperation.place = geocodeOperation.place
         }
-
-        geocodeQueue.addOperations(operations, waitUntilFinished: true)
-        self.progressBar?.complete(success: true)
-    }
-    
-    func addToQueue(_ location: EXIFLocation, place: IPTCLocatable) {
-        let operation = ExifWriterOperation(location: location, place: place, exiftool: exiftool)
         
-        exifWriteQueue.addOperation(operation)
+        writeOperation.completionBlock = {
+            if writeOperation.success {
+                self.succusfulExifLocations.insert(location.sourceURL)
+            }
+            if !writeOperation.statusText.isEmpty {
+                print(writeOperation.statusText)
+            }
+            
+        }
+        
+        writeOperation.addDependency(geocodeOperation)
+        
+        omniQueue.addOperations([geocodeOperation, writeOperation], waitUntilFinished: false)
+        
     }
     
-    
-    
+
     public func update(_ completionHandler: @escaping (Int, Int) -> Void) {
+        sourceURLs.forEach { url in
+            addToOmniQueue(url)
+        }
+        sleep(1) // Sleep to ensure everything has been added to queue
+        omniQueue.waitUntilAllOperationsAreFinished()
         
-        let locations = addToQueue(sourceURLs)
-        addToQueue(locations, waitUntilFinished: false)
-        
-        
-        
-        
-        
-//        exifReadQueue.
-//        let locations: [EXIFLocation] = try sourceURLs.reduce([]) { (previous, url) in
-//            return try EXIFLocation.exifLocation(for: url) + previous
-//        }
-//
-//        print("Writing location information")
-//        var locationUpdateCount = 0
-//
-//        operationQueue.qualityOfService = .userInitiated
-//        operationQueue.maxConcurrentOperationCount = 1
-//
-//        let ops = locations.map { location -> Operation in
-//            let op = LocationOperation(withLocation: location, geocoder: geocoder) { success in
-//                if success {
-//                    locationUpdateCount += 1
-//                }
-//            }
-//            op.dryRun = self.dryRun
-//            op.completionBlock = {
-//
-//                if self.operationQueue.operations.isEmpty {
-//                    completionHandler(locationUpdateCount, locations.count)
-//                }
-//            }
-//            return op
-//        }
-//
-//        operationQueue.addOperations(ops, waitUntilFinished: false)
+        completionHandler(succusfulExifLocations.count, exifLocations.count)
 
+    }
+    
+    func percent(for queue: OperationQueue, total: Int) -> Int {
+        return ((total - queue.operationCount) / total ) * 100
     }
     
 }
 
 extension LocationUpdater {
+    
+    /// Attempt to get the contents of the DCIM of the URL.
+    ///
+    /// If the given URL contains a DCIM directory it is treated as a memory card
+    /// and any valid DCIM folders will be returned.
+    ///
+    /// - Parameter url: URL to return the DCIM contents of
+    /// - Returns: The valid DCIM contents, or `nil` if the folder does not contains a DCIM directory.
     public static func dcimContents(at url: Foundation.URL) -> [Foundation.URL]? {
-        var isDir: ObjCBool = false
         
+        // Path of potential DCIM directory
         let dcimURL = url.appendingPathComponent("DCIM")
-
-        FileManager.default.fileExists(atPath: dcimURL.path, isDirectory: &isDir)
         
-        if isDir.boolValue {
-            NSLog("Reading contents of \(dcimURL.path)")
+        // Get the contents of the DCIM dir
+        let dcimContents = try? FileManager.default.contentsOfDirectory(at: dcimURL, includingPropertiesForKeys: nil, options: FileManager.DirectoryEnumerationOptions.skipsHiddenFiles)
 
-            let dcimContents = try? FileManager.default.contentsOfDirectory(at: dcimURL, includingPropertiesForKeys: nil, options: FileManager.DirectoryEnumerationOptions.skipsHiddenFiles)
+        // Filter for valid DCIM image directories
+        return dcimContents?.filter { url in
+            url.lastPathComponent.range(of: "^\\d{3}\\w{5}$", options: .regularExpression) != nil
+            }
 
-            return dcimContents?.filter { url in
-                url.lastPathComponent.range(of: "\\d{3}\\w{5}", options: .regularExpression) != nil
-                }
-
-        }
-        
-        return nil
     }
 }
