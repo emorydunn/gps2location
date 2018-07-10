@@ -101,7 +101,7 @@ public class LocationUpdater {
         
         writeOperation.addDependency(geocodeOperation)
         
-        omniQueue.addOperations([geocodeOperation, writeOperation], waitUntilFinished: false)
+        omniQueue.addOperations([geocodeOperation, writeOperation], waitUntilFinished: true)
         
     }
     
