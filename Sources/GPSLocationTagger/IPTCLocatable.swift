@@ -8,7 +8,7 @@
 import Foundation
 import CoreLocation
 
-public protocol IPTCLocatable {
+public protocol IPTCLocatable: CustomStringConvertible {
     
     var country: String? { get }
     var state: String? { get }
@@ -16,6 +16,12 @@ public protocol IPTCLocatable {
     var route: String? { get }
     var neighborhood: String? { get }
     
+}
+
+extension IPTCLocatable {
+    public var description: String {
+        return "\(country ?? "none"), \(state ?? "none"), \(city ?? "none")"
+    }
 }
 
 struct IPTCLocation: IPTCLocatable {
