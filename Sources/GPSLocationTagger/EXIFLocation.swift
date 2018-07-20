@@ -42,9 +42,27 @@ public struct EXIFLocation: Codable {
         let urlString = try values.decode(String.self, forKey: .sourceURL)
         self.sourceURL = URL(fileURLWithPath: urlString)
         
-        self.latitude = try values.decode(Double.self, forKey: .latitude)
-        self.longitude = try values.decode(Double.self, forKey: .longitude)
-        self.status = try values.decode(GPSStatus.self, forKey: .status)
+        // If exiftool is running on a directory a failture on an single file
+        // will result in failing the whole set.
+        // Handle erors reading GPS information and set default values
+        var latitude: Double
+        var longitude: Double
+        let status: GPSStatus
+        do {
+            latitude = try values.decode(Double.self, forKey: .latitude)
+            longitude = try values.decode(Double.self, forKey: .longitude)
+            status = try values.decode(GPSStatus.self, forKey: .status)
+        } catch {
+            latitude = 0
+            longitude = 0
+            status = .void
+        }
+        
+        self.latitude = latitude
+        self.longitude = longitude
+        self.status = status
+        
+        
     }
     
 }
