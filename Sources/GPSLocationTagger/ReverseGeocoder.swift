@@ -28,7 +28,7 @@ public class AppleGeocoder: ReverseGeocoder {
             }
             else {
                 // An error occurred during geocoding.
-                print(error!.localizedDescription)
+//                print(error!.localizedDescription)
                 completionHandler(nil)
             }
         }

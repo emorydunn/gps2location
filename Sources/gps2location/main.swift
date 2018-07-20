@@ -25,7 +25,7 @@ let exiftool = Exiftool(trace: nil)
 
 let updater = LocationUpdater(sourceURLs: options.input, geocoder: geocoder, exiftool: exiftool, dryRun: options.shouldPerformDryRun)
 
-updater.update { (success, total) in
-    print("Updated \(success) / \(total)")
+updater.update { (success, total, _) in
+    print("\nUpdated \(success) / \(total)")
     
 }

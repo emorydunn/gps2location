@@ -72,7 +72,7 @@ class ExifReaderOperation: DAOperation {
                 ])
 
         } catch {
-            print("error: could not read images")
+//            print("error: could not read images")
         }
         self.executing(false)
         self.finish(true)
