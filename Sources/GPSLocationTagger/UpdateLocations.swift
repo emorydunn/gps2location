@@ -6,8 +6,11 @@
 //
 
 import Foundation
+import Cocoa
+import Utility
+import Basic
 
-public class LocationUpdater {
+public class LocationUpdater: NSObject {
     
     public let sourceURLs: [Foundation.URL]
     
@@ -15,14 +18,17 @@ public class LocationUpdater {
     public let exiftool: ExiftoolProtocol
     
     public let dryRun: Bool
-
+    
     /// Unique image URLs
     var exifLocations = Set<Foundation.URL>()
     
     /// Count of locations written successfully
     var succusfulExifLocations = Set<Foundation.URL>()
 
-    let omniQueue = OperationQueue()
+    @objc let omniQueue = OperationQueue()
+    var queueTotalTasks: Int = 0
+    var progressBar: ProgressBarProtocol? = nil
+    let progressQueue = DispatchQueue(label: "ProgressQeue")
     
     public convenience init(sourceURL: Foundation.URL, geocoder: ReverseGeocoder, exiftool: ExiftoolProtocol, dryRun: Bool) {
         self.init(sourceURLs: [sourceURL], geocoder: geocoder, exiftool: exiftool, dryRun: dryRun)
@@ -45,6 +51,7 @@ public class LocationUpdater {
         
         // Queue Settings
         omniQueue.maxConcurrentOperationCount = 1
+        omniQueue.isSuspended = true
         
     }
     
@@ -82,43 +89,73 @@ public class LocationUpdater {
         exifLocations.insert(location.sourceURL)
         
         geocodeOperation.completionBlock = {
+            self.omniQueue.name = "Geocoding \(location.sourceURL.lastPathComponent)"
             if !geocodeOperation.statusText.isEmpty {
-                print(geocodeOperation.statusText)
+//                print(geocodeOperation.statusText)
             }
             
             writeOperation.place = geocodeOperation.place
         }
         
         writeOperation.completionBlock = {
+            self.omniQueue.name = "Writing \(location.sourceURL.lastPathComponent)"
             if writeOperation.success {
                 self.succusfulExifLocations.insert(location.sourceURL)
             }
             if !writeOperation.statusText.isEmpty {
-                print(writeOperation.statusText)
+//                print(writeOperation.statusText)
             }
             
         }
         
         writeOperation.addDependency(geocodeOperation)
-        
-        omniQueue.addOperations([geocodeOperation, writeOperation], waitUntilFinished: true)
+//        print("Enqueueing \(location.sourceURL.lastPathComponent)")
+        omniQueue.addOperations([geocodeOperation, writeOperation], waitUntilFinished: false)
         
     }
     
 
-    public func update(_ completionHandler: @escaping (Int, Int) -> Void) {
+    public func update(_ completionHandler: @escaping (Int, Int, TimeInterval) -> Void) {
         sourceURLs.forEach { url in
             addToOmniQueue(url)
         }
+//        print("Queue is \(omniQueue.isSuspended ? "paused" : "active") with \(omniQueue.operationCount / 2) tasks")
+        queueTotalTasks = omniQueue.operationCount
+        
+        addObserver(
+            self,
+            forKeyPath: #keyPath(omniQueue.operationCount),
+            options: NSKeyValueObservingOptions.new,
+            context: nil
+        )
+        
+        progressBar = createProgressBar(forStream: stdoutStream, header: "Geocoding")
+        let startDate = Date()
+        omniQueue.isSuspended = false
         sleep(1) // Sleep to ensure everything has been added to queue
         omniQueue.waitUntilAllOperationsAreFinished()
         
-        completionHandler(succusfulExifLocations.count, exifLocations.count)
+        progressBar?.complete(success: true)
+        let duration = Date().timeIntervalSince(startDate)
+        completionHandler(succusfulExifLocations.count, exifLocations.count, duration)
 
     }
     
     func percent(for queue: OperationQueue, total: Int) -> Int {
         return ((total - queue.operationCount) / total ) * 100
+    }
+    
+    public override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
+        if keyPath == #keyPath(omniQueue.operationCount) {
+            let complete = Double(queueTotalTasks - omniQueue.operationCount) / Double(queueTotalTasks)
+            
+            let percent = Int(complete * 100)
+
+            progressQueue.async {
+                self.progressBar?.update(percent: percent, text: self.omniQueue.name ?? "")
+            }
+            
+        }
     }
     
 }
