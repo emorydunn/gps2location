@@ -82,7 +82,7 @@ struct OptionParser {
         do {
             let result = try parser.parse(arguments)
             var options = Options()
-            binder.fill(result, into: &options)
+            try binder.fill(parseResult: result, into: &options)
             self.options = options
             
         } catch {

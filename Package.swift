@@ -1,4 +1,4 @@
-// swift-tools-version:4.0
+// swift-tools-version:4.2
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -11,7 +11,7 @@ let package = Package(
         .library(
             name: "GPSLocationTagger",
             targets: ["GPSLocationTagger"]),
-        
+
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
@@ -24,7 +24,7 @@ let package = Package(
         .target(
             name: "gps2location",
             dependencies: ["GPSLocationTagger", "Utility"]),
-        
+
         .target(
             name: "GPSLocationTagger",
             dependencies: ["Utility"]),
